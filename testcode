@@ -1,0 +1,455 @@
+#### load packages--------------------
+
+
+library(shiny)
+library(shinydashboard)
+library(ggplot2)
+library(RColorBrewer)
+library(shinyjqui)
+
+library(shinyWidgets)
+library(plotly)
+library(ggtips)
+
+#### load data ---------------------
+
+FM_pressure <- readRDS("data/FM_pressure.rds")
+GM_pressure <- readRDS("data/GM_pressure.rds")
+bind_pressure <- readRDS("data/bind_pressure.rds")
+
+#### load variables
+batchchoices <- list("batch1"= "batch1",                       
+                     "batch2"="batch2 ",
+                     "batch3"= "batch3",
+                     "batch4"= "batch4 ")
+selectedbatches <- c("batch1","batch2","batch3","batch4")
+# choicesvarFM2 <- c("batch1","batch2"="FM2_2")
+
+
+brewer.pal(8,"Accent")
+markercol = list("FM1" = "#7FC97F",
+                 "FM2" = "#BEAED4",
+                 "FM3" = "#FDC086",
+                 "FM4" = "#FFFF99",
+                 "GM1" = "#386CB0",
+                 "GM2" = "#F0027F",
+                 "GM3" = "#BF5B17",
+                 "GM4" = "#666666")
+
+markershape = list ('batch1' = 15,
+                    "batch2" = 16,
+                    "batch3" = 17,
+                    "batch4" = 18 )
+
+
+convertMenuItem <- function(mi,tabName) {
+  mi$children[[1]]$attribs['data-toggle']="tab"
+  mi$children[[1]]$attribs['data-value'] = tabName
+  mi
+}
+
+
+##### UI ---------------------------
+
+
+### can add a notificaton menu with icons to the right (search dropdownMenu)
+
+# header
+header <-  dashboardHeader(title = "some app", titleWidth=350)
+
+sidebar <-  dashboardSidebar(
+  width = 350,
+  
+  sidebarMenu(
+    menuItem("About", tabName = "about", 
+             icon = icon("info"),
+             selected = TRUE
+    ),
+    #### pressure measurements input selection ####   
+    convertMenuItem(
+      menuItem("oxygen production",
+               tabName = "charts",
+               icon = icon("chart-line"),
+               h5("Select FM batch(es):"),
+               fluidPage(
+                 fluidRow(
+                   column(6, checkboxGroupInput("pressure_FM1", "FM1",
+                                                choices = c(
+                                                  "batch1" = "batch1",
+                                                  "batch2" = "batch2",
+                                                  "batch3" = "batch3",
+                                                  "batch4" = "batch4"
+                                                ),
+                                                selected = selectedbatches
+                   )),
+                   column(6, checkboxGroupInput("pressure_FM2", "FM2",
+                                                choices = c(
+                                                  "batch1" = "batch1",
+                                                  "batch2" = "batch2",
+                                                  "batch3" = "batch3",
+                                                  "batch4" = "batch4"
+                                                )
+                   ))
+                 ),
+                 fluidRow(
+                   column(6, checkboxGroupInput("pressure_FM3", "FM3",
+                                                choices = c("batch1" = "batch1",
+                                                            "batch2" = "batch2")
+                   )),
+                   column(6, checkboxGroupInput("pressure_FM4", "FM4",
+                                                choices = c(
+                                                  "batch1" = "batch1",
+                                                  "batch2" = "batch2",
+                                                  "batch3" = "batch3",
+                                                  "batch4" = "batch4"
+                                                )
+                   ))
+                 )
+               ),
+               
+               h5("Select GM batch(es):"),
+               
+               fluidPage(
+                 fluidRow(
+                   column(6, checkboxGroupInput("pressure_GM1", "GM1",
+                                                choices = c(
+                                                  "batch1" = "batch1",
+                                                  "batch2" = "batch2",
+                                                  "batch3" = "batch3",
+                                                  "batch4" = "batch4"
+                                                )
+                   )),
+                   
+                   
+                   column(6, checkboxGroupInput("pressure_GM2",  "GM2",
+                                                choices = c(
+                                                  "batch1" = "batch1",
+                                                  "batch2" = "batch2",
+                                                  "batch3" = "batch3",
+                                                  "batch4" = "batch4"
+                                                )
+                   ))
+                 ),
+                 
+                 fluidRow(
+                   column(6, checkboxGroupInput("pressure_GM3", "GM3",
+                                                choices = c(
+                                                  "batch1" = "batch1",
+                                                  "batch2" = "batch2",
+                                                  "batch3" = "batch3",
+                                                  "batch4" = "batch4"
+                                                )
+                   )),
+                   
+                   
+                   column(6, checkboxGroupInput("pressure_GM4", "GM4",
+                                                choices = c(
+                                                  "batch1" = "batch1",
+                                                  "batch2" = "batch2",
+                                                  "batch3" = "batch3",
+                                                  "batch4" = "batch4"
+                                                )
+                   ))
+                 )
+                 
+               )
+               
+      ),
+      tabName = "charts"),
+    convertMenuItem(
+      menuItem("Fluorescence measurements",
+               tabName = "charts",
+               icon = icon("chart-line"),
+               h5("Select FM batch(es):"),
+               fluidPage(
+                 fluidRow(
+                   column(6, checkboxGroupInput("fluo_FM1", "FM1",
+                                                choices = c(
+                                                  "batch1" = "batch1",
+                                                  "batch2" = "batch2",
+                                                  "batch3" = "batch3",
+                                                  "batch4" = "batch4"
+                                                ),
+                                                selected = selectedbatches
+                   )),
+                   column(6, checkboxGroupInput("fluo_FM2", "FM2",
+                                                choices = c(
+                                                  "batch1" = "batch1",
+                                                  "batch2" = "batch2",
+                                                  "batch3" = "batch3",
+                                                  "batch4" = "batch4"
+                                                )
+                   ))
+                 ),
+                 fluidRow(
+                   column(6, checkboxGroupInput("fluo_FM3", "FM3",
+                                                choices = c("batch1" = "batch1",
+                                                            "batch2" = "batch2")
+                   )),
+                   column(6, checkboxGroupInput("fluo_FM4", "FM4",
+                                                choices = c(
+                                                  "batch1" = "batch1",
+                                                  "batch2" = "batch2",
+                                                  "batch3" = "batch3",
+                                                  "batch4" = "batch4"
+                                                )
+                   ))
+                 )
+               ),
+               
+               h5("Select GM batch(es):"),
+               
+               fluidPage(
+                 fluidRow(
+                   column(6, checkboxGroupInput("fluo_GM1", "GM1",
+                                                choices = c(
+                                                  "batch1" = "batch1",
+                                                  "batch2" = "batch2",
+                                                  "batch3" = "batch3",
+                                                  "batch4" = "batch4"
+                                                )
+                   )),
+                   
+                   
+                   column(6, checkboxGroupInput("fluo_GM2",  "GM2",
+                                                choices = c(
+                                                  "batch1" = "batch1",
+                                                  "batch2" = "batch2",
+                                                  "batch3" = "batch3",
+                                                  "batch4" = "batch4"
+                                                )
+                   ))
+                 ),
+                 
+                 fluidRow(
+                   column(6, checkboxGroupInput("fluo_GM3", "GM3",
+                                                choices = c(
+                                                  "batch1" = "batch1",
+                                                  "batch2" = "batch2",
+                                                  "batch3" = "batch3",
+                                                  "batch4" = "batch4"
+                                                )
+                   )),
+                   
+                   
+                   column(6, checkboxGroupInput("fluo_GM4", "GM4",
+                                                choices = c(
+                                                  "batch1" = "batch1",
+                                                  "batch2" = "batch2",
+                                                  "batch3" = "batch3",
+                                                  "batch4" = "batch4"
+                                                )
+                   ))
+                 )
+                 
+               )
+               
+      ),
+      tabName = "charts")
+    
+    
+    
+  )
+)
+
+
+#### body ####-------------------------------------------------------------------------------------------------------------
+
+body <- dashboardBody(
+  tabItems(
+    tabItem (tabName = "about", 
+             h2("some title"),
+             box(title = "some textl")
+    ),
+    
+    tabItem (tabName = "charts",
+             h2("Selected data"),
+             fluidRow(
+               box(width = 12,
+                   collapsible = TRUE,
+                   title = "Information", "Click and hold on plot to draw a zoom box.",
+                   br(),
+                   "doube click on zoombox to zoom or doube click on plot to reset."
+               )
+             ),
+             fluidRow (
+               box(width = 12,
+                   collapsible = T,
+                   collapsed = F,
+                   uiOutput("pressureplot.ui"#,
+                            # dblclick = "OMUplot_dblclick",
+                            # brush = brushOpts(id = "OMUplot_brush",
+                            # resetOnNew = TRUE )
+                            
+                   ),
+                   radioButtons(inputId = "rb_Xaspressure",
+                                label = h5("set X-axis"),
+                                choices = list(
+                                  "Date" = "time",
+                                  "Hours of incubation in batch " = "incubation"),
+                                selected = "time",
+                                inline = TRUE),
+                   # sliderInput("pressurewidth","set plot width", 1,12, 12,step = 1,round = TRUE)
+               )
+             ),
+             
+             
+             fluidRow (
+               box(
+                 width=12,
+                 collapsible = T,
+                 collapsed = F,
+                 uiOutput("fluoplot"#,
+                          # dblclick = "OMUplot_dblclick",
+                          # brush = brushOpts(id = "OMUplot_brush",
+                          # resetOnNew = TRUE )
+                          
+                          
+                          
+                          
+                          
+                 ),
+                 radioButtons(inputId = "rb_Xasfluo",
+                              label = h5("set X-axis"),
+                              choices = list(
+                                "Date" = "time",
+                                "Hours of incubation in batch " = "incubation"),
+                              selected = "time",
+                              inline = TRUE),
+                 
+                 checkboxInput(inputId = "cb_facetfluo",
+                               label = h5("set batches grid"),
+                               value = TRUE,
+                 )
+               )
+             )
+             
+             
+             
+             #,
+             # fluidRow (
+             #   box(width = 12,
+             #       title= NULL,
+             #       radioButtons(inputId = "Xas",
+             #                    label = h3("Radio buttons"),
+             #                    choices = list(
+             #                      "Date" = 1,
+             #                      "Hours of incubation in batch " = 2),
+             #                    selected = 1,
+             #                    inline = TRUE)
+             #   )
+             #)
+    )
+  )
+)
+
+
+
+
+
+
+
+
+ui <- dashboardPage(header, sidebar, body)
+
+
+###### server ######## -----------------------------------------------------------------------------------------
+
+server <- function(input, output) {
+  
+  # ranges <- reactiveValues(x = NULL, y = NULL)
+  test1Input <-reactive({input$pressurewidth})
+  
+  
+  ##### omuplot output  ####
+
+    
+   
+  
+  
+  ##### pressureplot output#####
+  
+  output$pressureplot <- renderPlotly ({
+    req(!is.null(input$pressure_FM1)||!is.null(input$pressure_FM2)||!is.null(input$pressure_FM3)||!is.null(input$pressure_FM4)
+        ||!is.null(input$pressure_GM1)||!is.null(input$pressure_GM2)||!is.null(input$pressure_GM3)||!is.null(input$pressure_GM4))
+    
+    Xvaluepressure <- input$rb_Xaspressure
+    
+    dataselectFM_pressure <- subset(FM_pressure, (FM_pressure$batch  %in% (input$pressure_FM1) & FM_pressure$reactor=="FM1")|
+                                      (FM_pressure$batch  %in% (input$pressure_FM2) & FM_pressure$reactor=="FM2")|
+                                      (FM_pressure$batch  %in% (input$pressure_FM3) & FM_pressure$reactor=="FM3")|
+                                      (FM_pressure$batch  %in% (input$pressure_FM4) & FM_pressure$reactor=="FM4"),
+                                    select = c(time, incubation, pressure, batch, reactor, get(input$rb_Xaspressure)))
+    FMcolor<- dataselectFM_pressure$reactor
+    levels.FMcolor <- markercol
+    
+    dataselectGM_pressure <- subset(GM_pressure, (GM_pressure$batch  %in% (input$pressure_GM1) & GM_pressure$reactor=="GM1")|
+                                      (GM_pressure$batch  %in% (input$pressure_GM2) & GM_pressure$reactor=="GM2")|
+                                      (GM_pressure$batch  %in% (input$pressure_GM3) & GM_pressure$reactor=="GM3")|
+                                      (GM_pressure$batch  %in% (input$pressure_GM4) & GM_pressure$reactor=="GM4"),
+                                    select = c(time, pressure, batch, reactor, get(input$rb_Xaspressure)))
+    
+    GMcolor<- dataselectGM_pressure$reactor
+    levels.GMcolor <- markercol
+    
+    ggplotly( ggplot()+
+                geom_point(data = dataselectFM_pressure,
+                           aes(x = get(Xvaluepressure), 
+                               y = pressure,
+                               color = as.character(FMcolor))) +
+                geom_point(data = dataselectGM_pressure,
+                           aes(x = get(Xvaluepressure),
+                               y = pressure,
+                               color = as.character(GMcolor)))+
+                # coord_cartesian(xlim = ranges$x, ylim = ranges$y, expand = FALSE)+
+                facet_grid(.~batch, scales = "free_x")
+    )
+    
+  })
+  output$pressureplot.ui <- renderUI({plotlyOutput("pressureplot")})
+
+  
+  
+  #   ####fluoplot####
+  
+  
+    output$fluoplot <- renderUI ({
+      req(!is.null(input$fluo_FM1)||!is.null(input$fluo_FM2)||!is.null(input$fluo_FM3)||!is.null(input$fluo_FM4)
+          ||!is.null(input$fluo_GM1)||!is.null(input$fluo_GM2)||!is.null(input$fluo_GM3)||!is.null(input$fluo_GM4))
+
+      Xvaluefluo <- input$rb_Xasfluo
+
+      dataselectFluo <- subset(bind_pressure,
+                               (bind_pressure$batch  %in% (input$pressure_FM1) & bind_pressure$reactor=="FM1")|
+                               (bind_pressure$batch  %in% (input$pressure_FM2) & bind_pressure$reactor=="FM2")|
+                               (bind_pressure$batch  %in% (input$pressure_FM3) & bind_pressure$reactor=="FM3")|
+                               (bind_pressure$batch  %in% (input$pressure_FM4) & bind_pressure$reactor=="FM4")|
+                                 (bind_pressure$batch  %in% (input$pressure_GM1) & bind_pressure$reactor=="GM1")|
+                                 (bind_pressure$batch  %in% (input$pressure_GM2) & bind_pressure$reactor=="GM2")|
+                                 (bind_pressure$batch  %in% (input$pressure_GM3) & bind_pressure$reactor=="GM3")|
+                                 (bind_pressure$batch  %in% (input$pressure_GM4) & bind_pressure$reactor=="GM4")
+                                 ,
+                                      select = c(time, incubation, pressure, batch, reactor, get(input$rb_Xasfluo)))
+      bindcolor<- dataselectFluo$reactor
+      levels.bindcolor <- markercol
+
+
+      plot= ggplot()+
+                  geom_point(data = dataselectFluo,
+                             aes(x = get(Xvaluefluo),
+                                 y = pressure,
+                                 color = as.character(bindcolor))) +
+
+                  # coord_cartesian(xlim = ranges$x, ylim = ranges$y, expand = FALSE)+
+                  facet_grid(.~batch, scales = "free_x")
+      varDict=list(time = "", pressure = "bar")
+      ggtips::plotWithTooltips(plot, varDict = varDict)
+
+
+
+    })
+
+}
+
+shinyApp(ui, server)
+
